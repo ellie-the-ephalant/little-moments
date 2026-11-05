@@ -162,6 +162,83 @@
       transparent 8px 14px
     );
   }
+
+  .film-ticket {
+    position: relative;
+    border: 1px solid var(--color-rule);
+    background: var(--color-cream);
+    padding: 1.25rem;
+    box-shadow: var(--shadow-panel);
+  }
+
+  .film-ticket::before {
+    position: absolute;
+    top: -7px;
+    left: 1.5rem;
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--color-rule);
+    border-radius: 50%;
+    background: var(--color-paper);
+    content: "";
+  }
+
+  .ticket-stack {
+    position: relative;
+  }
+
+  .ticket-stack::before {
+    position: absolute;
+    inset-block: 1.5rem;
+    left: 1.8rem;
+    border-left: 1px dashed var(--color-rule);
+    content: "";
+  }
+
+  .washi-tape {
+    clip-path: polygon(
+      0 5px,
+      7% 0,
+      14% 3px,
+      22% 1px,
+      30% 4px,
+      38% 0,
+      46% 3px,
+      54% 1px,
+      62% 4px,
+      70% 0,
+      78% 3px,
+      86% 1px,
+      94% 4px,
+      100% 1px,
+      100% calc(100% - 3px),
+      92% 100%,
+      84% calc(100% - 2px),
+      76% 100%,
+      68% calc(100% - 3px),
+      60% 100%,
+      52% calc(100% - 2px),
+      44% 100%,
+      36% calc(100% - 3px),
+      28% 100%,
+      20% calc(100% - 2px),
+      12% 100%,
+      5% calc(100% - 3px),
+      0 100%
+    );
+  }
+
+  .closing-band {
+    position: relative;
+    border-top: 1px solid var(--color-rule);
+  }
+
+  .closing-band::before {
+    position: absolute;
+    inset: 5px 0 auto;
+    border-top: 1px solid var(--color-rule);
+    content: "";
+  }
 }
 
 @keyframes strip-float {
@@ -241,6 +318,10 @@
   animation: strip-float 9s ease-in-out infinite;
 }
 
+.sample-motion-paused .animate-strip-float {
+  animation-play-state: paused;
+}
+
 .animate-strip-eject {
   animation: strip-eject 320ms ease-out both;
 }
@@ -311,6 +392,10 @@ dialog[open]::backdrop {
     animation: none !important;
   }
 
+  .sample-motion-control {
+    display: none !important;
+  }
+
   .animate-countdown-pop,
   .animate-booth-flash {
     animation: none !important;
@@ -320,5 +405,11 @@ dialog[open]::backdrop {
     border: 8px solid var(--color-cream);
     background: transparent;
     opacity: 1;
+  }
+}
+
+@media (min-width: 768px) {
+  .ticket-stack::before {
+    display: none;
   }
 }

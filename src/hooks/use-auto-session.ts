@@ -33,6 +33,7 @@ export interface UseAutoSessionResult {
   resume: () => Promise<void>;
   retake: (index: number) => Promise<void>;
   tryAgain: () => Promise<void>;
+  cancelFinishTransition: () => void;
 }
 
 export function firstEmptyVisibleSlot(
@@ -50,6 +51,17 @@ export function firstEmptyVisibleSlot(
 
 function isRunningState(state: AutoSessionState) {
   return state === "counting" || state === "capturing" || state === "gap";
+}
+
+export function cancelAutoAdvance(
+  state: AutoSessionState,
+  generation: { current: number },
+  clearTimer: () => void,
+) {
+  if (state !== "complete") return false;
+  generation.current += 1;
+  clearTimer();
+  return true;
 }
 
 export function useAutoSession(
@@ -122,6 +134,10 @@ export function useAutoSession(
       },
       reducedMotion ? 0 : 900,
     );
+  };
+
+  const cancelFinishTransition = () => {
+    cancelAutoAdvance(stateRef.current, generation, clearTimer);
   };
 
   const capture = (index: number, request: number) => {
@@ -402,5 +418,6 @@ export function useAutoSession(
     resume,
     retake,
     tryAgain,
+    cancelFinishTransition,
   };
 }

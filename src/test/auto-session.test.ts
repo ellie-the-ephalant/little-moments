@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { firstEmptyVisibleSlot } from "../hooks/use-auto-session";
+import {
+  cancelAutoAdvance,
+  firstEmptyVisibleSlot,
+} from "../hooks/use-auto-session";
 import type { Photo } from "../lib/types";
 
 const photo = (id: string): Photo => ({
@@ -23,5 +26,27 @@ describe("firstEmptyVisibleSlot", () => {
     expect(firstEmptyVisibleSlot([photo("a"), photo("b"), photo("c")], 2)).toBe(
       -1,
     );
+  });
+});
+
+describe("cancelAutoAdvance", () => {
+  it("invalidates a delayed finish and clears its timer only after completion", () => {
+    const generation = { current: 4 };
+    let clearedTimers = 0;
+
+    expect(
+      cancelAutoAdvance("complete", generation, () => {
+        clearedTimers += 1;
+      }),
+    ).toBe(true);
+    expect(generation.current).toBe(5);
+    expect(clearedTimers).toBe(1);
+
+    expect(
+      cancelAutoAdvance("paused", generation, () => {
+        clearedTimers += 1;
+      }),
+    ).toBe(false);
+    expect(clearedTimers).toBe(1);
   });
 });

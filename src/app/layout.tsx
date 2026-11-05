@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 import "@fontsource-variable/fraunces/wght.css";
 import "@fontsource-variable/fraunces/wght-italic.css";
@@ -8,6 +8,8 @@ import "./globals.css";
 import { GrainOverlay } from "@/components/site/grain-overlay";
 import { ToastRegion } from "@/components/ui/toast-region";
 
+const basePath = (process.env.PAGES_BASE_PATH ?? "").replace(/\/$/, "");
+
 export const metadata: Metadata = {
   title: {
     default: "little moments",
@@ -15,7 +17,12 @@ export const metadata: Metadata = {
   },
   description:
     "A tiny, local-first photobooth that turns a few photos into a designed strip. No account, no uploads, no cloud.",
+  icons: { icon: `${basePath}/icon.svg` },
   referrer: "strict-origin-when-cross-origin",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#F3EBDD",
 };
 
 export default function RootLayout({

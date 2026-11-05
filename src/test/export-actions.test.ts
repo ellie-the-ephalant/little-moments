@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { getStripRevision } from "../lib/export-actions";
+import {
+  coalesceInFlight,
+  getPreparedExportRevision,
+  getStripRevision,
+} from "../lib/export-actions";
 import type { Photo } from "../lib/types";
 import type { StripRenderSettings } from "../lib/render-strip";
 
@@ -41,5 +45,52 @@ describe("getStripRevision", () => {
         title: "A different afternoon",
       }),
     ).not.toBe(original);
+  });
+});
+
+describe("getPreparedExportRevision", () => {
+  it("changes when resolution or document fonts change", () => {
+    const standard = getPreparedExportRevision("strip-revision", 1, 0);
+
+    expect(getPreparedExportRevision("strip-revision", 1, 0)).toBe(standard);
+    expect(getPreparedExportRevision("strip-revision", 2, 0)).not.toBe(
+      standard,
+    );
+    expect(getPreparedExportRevision("strip-revision", 1, 1)).not.toBe(
+      standard,
+    );
+  });
+});
+
+describe("coalesceInFlight", () => {
+  it("shares one pending save per strip revision", async () => {
+    const pending = new Map<string, Promise<number>>();
+    let resolveSave: (value: number) => void = () => undefined;
+    let saveCount = 0;
+    const operation = new Promise<number>((resolve) => {
+      resolveSave = resolve;
+    });
+    const first = coalesceInFlight(pending, "revision-1", () => {
+      saveCount += 1;
+      return operation;
+    });
+    const second = coalesceInFlight(pending, "revision-1", () => {
+      saveCount += 1;
+      return Promise.resolve(2);
+    });
+
+    expect(second).toBe(first);
+    expect(saveCount).toBe(1);
+    resolveSave(1);
+    await expect(first).resolves.toBe(1);
+    await Promise.resolve();
+
+    await expect(
+      coalesceInFlight(pending, "revision-1", () => {
+        saveCount += 1;
+        return Promise.resolve(3);
+      }),
+    ).resolves.toBe(3);
+    expect(saveCount).toBe(2);
   });
 });

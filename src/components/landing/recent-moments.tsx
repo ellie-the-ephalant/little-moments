@@ -2,16 +2,19 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { ArrowRight } from "lucide-react";
 
 import { EmptyStripTeaser } from "@/components/gallery/empty-strip-teaser";
 import { StripCard } from "@/components/gallery/strip-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { buttonStyles } from "@/components/ui/button";
 import { listStrips } from "@/lib/gallery-store";
 import type { StripRecord } from "@/lib/types";
 
 export const RecentMoments = () => {
   const [records, setRecords] = useState<StripRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUnavailable, setIsUnavailable] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -20,7 +23,10 @@ export const RecentMoments = () => {
         if (isMounted) setRecords(saved.slice(0, 6));
       })
       .catch(() => {
-        if (isMounted) setRecords([]);
+        if (isMounted) {
+          setRecords([]);
+          setIsUnavailable(true);
+        }
       })
       .finally(() => {
         if (isMounted) setIsLoading(false);
@@ -36,6 +42,9 @@ export const RecentMoments = () => {
         <div>
           <p className="type-micro text-brick">05 · From this device</p>
           <h2 className="type-h2 mt-2">From this device</h2>
+          <p className="type-small mt-2 text-ink-soft">
+            Saved only in this browser. Not in a cloud.
+          </p>
         </div>
         {!isLoading && records.length ? (
           <Link
@@ -70,6 +79,24 @@ export const RecentMoments = () => {
               </li>
             ))}
           </ul>
+        ) : isUnavailable ? (
+          <div className="panel flex min-h-[18rem] flex-col items-start justify-center p-6 sm:p-8">
+            <p className="type-micro text-brick">Gallery unavailable</p>
+            <p
+              className="type-small mt-3 max-w-[52ch] text-ink-soft"
+              role="status"
+            >
+              This browser won&apos;t let us keep a gallery. Private browsing
+              often does this. You can still download your strip.
+            </p>
+            <Link
+              href="/studio"
+              className={buttonStyles({ className: "mt-5 gap-2" })}
+            >
+              Start a strip
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          </div>
         ) : (
           <EmptyStripTeaser isCompact />
         )}

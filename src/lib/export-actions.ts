@@ -6,9 +6,10 @@ import {
   type StripRenderSettings,
 } from "./render-strip";
 import { getStripGeometry } from "./strip-geometry";
-import type { Photo } from "./types";
-import type { StripRecord } from "./types";
+import type { Photo, StripRecord } from "./types";
 import { effectiveTitle, filenameForStrip, uid } from "./utils";
+
+const pendingGallerySaves = new Map<string, Promise<StripRecord>>();
 
 export type PreparedPng = {
   blob: Blob;
@@ -31,6 +32,31 @@ export function getStripRevision(
     settings.title,
     settings.dateISO,
   ]);
+}
+
+export function getPreparedExportRevision(
+  stripRevision: string,
+  scale: 1 | 2,
+  fontRevision: number,
+) {
+  return JSON.stringify([stripRevision, scale, fontRevision]);
+}
+
+export function coalesceInFlight<T>(
+  pending: Map<string, Promise<T>>,
+  key: string,
+  operation: () => Promise<T>,
+) {
+  const existing = pending.get(key);
+  if (existing) return existing;
+
+  const request = operation();
+  pending.set(key, request);
+  const clear = () => {
+    if (pending.get(key) === request) pending.delete(key);
+  };
+  void request.then(clear, clear);
+  return request;
 }
 
 function canvasToBlob(
@@ -101,7 +127,7 @@ export async function preparePngExport(
   }
 }
 
-export async function saveGalleryStrip(
+async function renderAndSaveGalleryStrip(
   photos: Photo[],
   settings: StripRenderSettings,
 ): Promise<StripRecord> {
@@ -160,6 +186,17 @@ export async function saveGalleryStrip(
       thumbnail.height = 0;
     }
   }
+}
+
+export function saveGalleryStrip(
+  photos: Photo[],
+  settings: StripRenderSettings,
+) {
+  return coalesceInFlight(
+    pendingGallerySaves,
+    getStripRevision(photos, settings),
+    () => renderAndSaveGalleryStrip(photos, settings),
+  );
 }
 
 export function downloadBlob(blob: Blob, filename: string) {

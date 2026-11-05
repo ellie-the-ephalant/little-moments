@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+import { useDocumentFonts } from "@/hooks/use-document-fonts";
 import {
+  getPreparedExportRevision,
   getStripRevision,
   preparePngExport,
   type PreparedPng,
@@ -26,7 +28,12 @@ export const usePreparedExport = ({
   settings,
   scale,
 }: UsePreparedExportProps): PreparedExportState => {
-  const revision = JSON.stringify([getStripRevision(photos, settings), scale]);
+  const fontRevision = useDocumentFonts();
+  const revision = getPreparedExportRevision(
+    getStripRevision(photos, settings),
+    scale,
+    fontRevision,
+  );
   const { layoutId, themeId, filterId, title, dateISO } = settings;
   const [state, setState] = useState<PreparedExportState>({
     status: "preparing",

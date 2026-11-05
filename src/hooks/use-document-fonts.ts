@@ -15,7 +15,9 @@ export function useDocumentFonts() {
       if (mounted) setFontRevision((revision) => revision + 1);
     };
     document.fonts.addEventListener("loadingdone", rerender);
-    void ensureFonts().then(rerender);
+    void ensureFonts().then((loaded) => {
+      if (loaded) rerender();
+    });
 
     return () => {
       mounted = false;

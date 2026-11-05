@@ -86,6 +86,7 @@ export const StudioShell = () => {
   };
 
   const startOver = () => {
+    session.cancelFinishTransition();
     camera.stop();
     useStudioStore.getState().resetSession();
   };
@@ -97,6 +98,7 @@ export const StudioShell = () => {
 
   const handleStepChange = (nextStep: StudioStep) => {
     if (nextStep === "finish" && !isFinishAvailable) return;
+    if (nextStep !== "finish") session.cancelFinishTransition();
     if (nextStep === "finish") camera.stop();
     setStep(nextStep);
   };
@@ -130,7 +132,7 @@ export const StudioShell = () => {
             headingRef={headingRef}
             stripRevision={stripRevision}
             savedStripRevision={savedStripRevision}
-            onBackToBooth={() => setStep("booth")}
+            onBackToBooth={() => handleStepChange("booth")}
             onStartOver={startOver}
             onStripSaved={setSavedStripRevision}
           />
