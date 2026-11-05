@@ -113,8 +113,7 @@ export const useStudioStore = create<StudioStore>()(
       setCountdown: (countdownSeconds) => set({ countdownSeconds }),
       setMirror: (mirror) => set({ mirror }),
       setFlash: (flash) => set({ flash }),
-      setTitle: (title) =>
-        set({ title: title.trim().slice(0, TITLE_MAX_LENGTH) }),
+      setTitle: (title) => set({ title: title.slice(0, TITLE_MAX_LENGTH) }),
       setDate: (dateISO) => set({ dateISO }),
       addPhotos: (photos) =>
         set((state) => ({

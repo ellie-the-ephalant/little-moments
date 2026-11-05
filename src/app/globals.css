@@ -207,6 +207,27 @@
   }
 }
 
+@keyframes countdown-pop {
+  from {
+    opacity: 0;
+    scale: 0.82;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes booth-flash {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.9;
+  }
+}
+
 @keyframes backdrop-in {
   from {
     opacity: 0;
@@ -230,6 +251,15 @@
 
 .animate-dialog-in {
   animation: dialog-in 150ms ease-out both;
+}
+
+.animate-countdown-pop {
+  animation: countdown-pop 180ms ease-out both;
+}
+
+.animate-booth-flash {
+  animation: booth-flash 180ms ease-out both;
+  background: var(--color-cream);
 }
 
 dialog[open]::backdrop {
@@ -279,5 +309,16 @@ dialog[open]::backdrop {
   .animate-step-in,
   .animate-dialog-in {
     animation: none !important;
+  }
+
+  .animate-countdown-pop,
+  .animate-booth-flash {
+    animation: none !important;
+  }
+
+  .animate-booth-flash {
+    border: 8px solid var(--color-cream);
+    background: transparent;
+    opacity: 1;
   }
 }

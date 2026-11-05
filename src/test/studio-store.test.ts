@@ -26,8 +26,11 @@ const photo = (id: string): Photo => ({
 describe("studio store", () => {
   beforeEach(resetState);
 
-  it("trims and clamps titles to 40 characters", () => {
-    useStudioStore.getState().setTitle(`  ${"a".repeat(41)}  `);
+  it("preserves spaces while editing and clamps titles to 40 characters", () => {
+    useStudioStore.getState().setTitle("a ");
+    expect(useStudioStore.getState().title).toBe("a ");
+
+    useStudioStore.getState().setTitle("a".repeat(41));
     expect(useStudioStore.getState().title).toBe("a".repeat(40));
   });
 

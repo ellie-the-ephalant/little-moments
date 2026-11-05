@@ -1,12 +1,19 @@
 import Link from "next/link";
+import type { MouseEventHandler } from "react";
 
 import { cn } from "@/lib/cn";
 
-export function Wordmark({ className }: { className?: string }) {
+interface WordmarkProps {
+  className?: string;
+  onClick?: MouseEventHandler<HTMLAnchorElement>;
+}
+
+export function Wordmark({ className, onClick }: WordmarkProps) {
   return (
     <Link
       href="/"
       aria-label="little moments, home"
+      onClick={onClick}
       className={cn(
         "group inline-flex items-center gap-2.5 text-ink transition-colors hover:text-brick",
         className,
