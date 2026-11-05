@@ -57,6 +57,7 @@ const PREVIEW_CACHE_LIMIT = 6;
 const previewCache = new Map<string, ImageSource>();
 const grainTiles = new Map<boolean, HTMLCanvasElement>();
 let cachedPhotoIds = "";
+let previewCacheRevision = 0;
 
 function closeImageSource(source: ImageSource) {
   const close = (source as ImageBitmap).close;
@@ -73,7 +74,9 @@ function syncPreviewCache(photos: Photo[]) {
   if (cachedPhotoIds !== photoIds) {
     clearPreviewCache();
     cachedPhotoIds = photoIds;
+    previewCacheRevision += 1;
   }
+  return previewCacheRevision;
 }
 
 function getCachedPreview(key: string) {
@@ -501,7 +504,10 @@ function drawBackgroundMotifs(
       ) {
         for (const x of [12, geometry.width - 20]) {
           roundedRectPath(context, x, y, 8, 12, 2);
+          context.fillStyle = theme.paper;
           context.fill();
+          context.strokeStyle = theme.border;
+          context.stroke();
         }
       }
       break;
@@ -611,6 +617,7 @@ async function renderAtScale(
   settings: StripRenderSettings,
   mode: RenderStripOptions["mode"],
   scale: number,
+  cacheRevision: number,
 ) {
   const geometry = getStripGeometry(settings.layoutId);
   const theme = themes[settings.themeId];
@@ -638,6 +645,7 @@ async function renderAtScale(
     const targetHeight = Math.round(slot.height * scale);
     const key = `${photo.id}\u0000${settings.filterId}\u0000${targetWidth}x${targetHeight}`;
     let source = mode === "preview" ? getCachedPreview(key) : undefined;
+    let isCached = source !== undefined;
     let scratch: HTMLCanvasElement | undefined;
     if (!source) {
       const filtered = await createFilteredSource(
@@ -649,40 +657,46 @@ async function renderAtScale(
       );
       source = filtered.source;
       scratch = filtered.scratch;
-      if (mode === "preview") cachePreview(key, source);
+      if (mode === "preview" && cacheRevision === previewCacheRevision) {
+        cachePreview(key, source);
+        isCached = true;
+      }
     }
 
-    context.save();
-    roundedRectPath(
-      context,
-      slot.x,
-      slot.y,
-      slot.width,
-      slot.height,
-      theme.radius,
-    );
-    context.fillStyle = theme.paper;
-    context.fill();
-    context.clip();
-    context.drawImage(source, slot.x, slot.y, slot.width, slot.height);
-    context.restore();
-    context.save();
-    roundedRectPath(
-      context,
-      slot.x + 0.5,
-      slot.y + 0.5,
-      slot.width - 1,
-      slot.height - 1,
-      theme.radius,
-    );
-    context.strokeStyle = theme.border;
-    context.lineWidth = 1;
-    context.stroke();
-    context.restore();
-
-    if (scratch && (mode === "export" || scratch !== source)) {
-      scratch.width = 0;
-      scratch.height = 0;
+    try {
+      context.save();
+      roundedRectPath(
+        context,
+        slot.x,
+        slot.y,
+        slot.width,
+        slot.height,
+        theme.radius,
+      );
+      context.fillStyle = theme.paper;
+      context.fill();
+      context.clip();
+      context.drawImage(source, slot.x, slot.y, slot.width, slot.height);
+      context.restore();
+      context.save();
+      roundedRectPath(
+        context,
+        slot.x + 0.5,
+        slot.y + 0.5,
+        slot.width - 1,
+        slot.height - 1,
+        theme.radius,
+      );
+      context.strokeStyle = theme.border;
+      context.lineWidth = 1;
+      context.stroke();
+      context.restore();
+    } finally {
+      if (scratch && (!isCached || scratch !== source)) {
+        scratch.width = 0;
+        scratch.height = 0;
+      }
+      if (!isCached) closeImageSource(source);
     }
   }
 
@@ -699,10 +713,10 @@ export async function renderStrip({
   scale,
 }: RenderStripOptions): Promise<HTMLCanvasElement> {
   const geometry = getStripGeometry(settings.layoutId);
-  if (photos.length < geometry.slotCount) {
+  const cacheRevision = syncPreviewCache(photos);
+  if (geometry.slots.some((_, index) => !photos[index])) {
     throw new ExportError("empty-slot", "Every visible frame needs a photo.");
   }
-  if (mode === "preview") syncPreviewCache(photos);
 
   await ensureFonts();
   const requestedScale = mode === "preview" ? 1 : scale;
@@ -717,7 +731,13 @@ export async function renderStrip({
   try {
     let canvas: HTMLCanvasElement;
     try {
-      canvas = await renderAtScale(photos, settings, mode, effectiveScale);
+      canvas = await renderAtScale(
+        photos,
+        settings,
+        mode,
+        effectiveScale,
+        cacheRevision,
+      );
     } catch (error) {
       if (
         mode !== "export" ||
@@ -727,7 +747,7 @@ export async function renderStrip({
       ) {
         throw error;
       }
-      canvas = await renderAtScale(photos, settings, mode, 1);
+      canvas = await renderAtScale(photos, settings, mode, 1, cacheRevision);
       if (probeCanvas(canvas)) return canvas;
       throw new ExportError(
         "canvas-allocation",
@@ -737,7 +757,7 @@ export async function renderStrip({
 
     if (mode === "preview" || probeCanvas(canvas)) return canvas;
     if (effectiveScale > 1) {
-      canvas = await renderAtScale(photos, settings, mode, 1);
+      canvas = await renderAtScale(photos, settings, mode, 1, cacheRevision);
       if (probeCanvas(canvas)) return canvas;
     }
     throw new ExportError(
