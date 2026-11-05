@@ -18,6 +18,8 @@ import { useAutoSession } from "@/hooks/use-auto-session";
 import { useBeforeUnload } from "@/hooks/use-before-unload";
 import { useCamera } from "@/hooks/use-camera";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { getStripRevision } from "@/lib/export-actions";
+import type { StripRenderSettings } from "@/lib/render-strip";
 import { getStripGeometry } from "@/lib/strip-geometry";
 import { useStudioStore } from "@/lib/studio-store";
 import { todayISO } from "@/lib/utils";
@@ -27,6 +29,9 @@ export const StudioShell = () => {
   const router = useRouter();
   const step = useStudioStore((state) => state.step);
   const layoutId = useStudioStore((state) => state.layoutId);
+  const themeId = useStudioStore((state) => state.themeId);
+  const title = useStudioStore((state) => state.title);
+  const dateISO = useStudioStore((state) => state.dateISO);
   const photos = useStudioStore((state) => state.photos);
   const isHydrated = useStudioStore((state) => state.hydrated);
   const mirror = useStudioStore((state) => state.mirror);
@@ -39,6 +44,17 @@ export const StudioShell = () => {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const previousStepRef = useRef<StudioStep>(step);
   const [isLeaveOpen, setIsLeaveOpen] = useState(false);
+  const [savedStripRevision, setSavedStripRevision] = useState<string | null>(
+    null,
+  );
+  const stripSettings: StripRenderSettings = {
+    layoutId,
+    themeId,
+    filterId,
+    title,
+    dateISO,
+  };
+  const stripRevision = getStripRevision(photos, stripSettings);
   const slotCount = getStripGeometry(layoutId).slotCount;
   const isFinishAvailable = photos.length >= slotCount;
 
@@ -67,6 +83,11 @@ export const StudioShell = () => {
   const leaveStudio = () => {
     camera.stop();
     router.push("/");
+  };
+
+  const startOver = () => {
+    camera.stop();
+    useStudioStore.getState().resetSession();
   };
 
   const requestLeave = () => {
@@ -107,7 +128,11 @@ export const StudioShell = () => {
         ) : step === "finish" ? (
           <FinishStep
             headingRef={headingRef}
+            stripRevision={stripRevision}
+            savedStripRevision={savedStripRevision}
             onBackToBooth={() => setStep("booth")}
+            onStartOver={startOver}
+            onStripSaved={setSavedStripRevision}
           />
         ) : (
           <div className="grid grid-cols-1 items-start gap-7 pb-32 lg:grid-cols-12 lg:gap-8 lg:pb-10">
