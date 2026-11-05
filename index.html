@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Little Moments — Photobooth v0.3</title>
+<style>
+  :root { --ink:#282526; --muted:#81797b; --paper:#fffdfb; --pink:#f3dfe2; --rose:#c78391; --line:#eadfe0; }
+  * { box-sizing:border-box }
+  body { margin:0; background:#f7f1ef; color:var(--ink); font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif; }
+  header { padding:20px 16px 8px; text-align:center }
+  header h1 { margin:0; font-family:Georgia,serif; font-weight:500; letter-spacing:.04em; font-size:clamp(27px,7vw,34px) }
+  header p { margin:5px 0 0; color:var(--muted); font-size:13px }
+  main { width:min(100%,760px); margin:14px auto 36px; padding:0 12px; display:grid; grid-template-columns:1fr; gap:13px; }
+  .panel { min-width:0; background:var(--paper); border:1px solid var(--line); border-radius:18px; padding:14px; box-shadow:0 8px 30px #4b2a2a0a; }
+  h2 { font-size:14px; margin:0 0 11px; letter-spacing:.02em }
+  .camera-wrap { position:relative; overflow:hidden; background:#252326; border-radius:13px; aspect-ratio:4/3; max-height: min(64vh, 520px); display:grid; place-items:center; }
+  video { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
+  .placeholder { color:#fff; text-align:center; padding:20px }
+  .countdown { position:absolute; inset:0; display:none; place-items:center; color:white; font-size:clamp(70px,18vw,130px); font-weight:700; text-shadow:0 3px 18px #0008; background:#0002; }
+  .controls { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px }
+  button, select, input { font:inherit; border-radius:11px; border:1px solid var(--line); padding:11px 13px; min-height:44px; }
+  button { cursor:pointer; background:white; color:var(--ink); touch-action:manipulation; }
+  button.primary { background:var(--rose); color:white; border-color:var(--rose); font-weight:650 }
+  button:disabled { opacity:.45; cursor:not-allowed }
+  button:hover:not(:disabled) { filter:brightness(.97) }
+  label { display:block; font-size:12px; color:var(--muted); margin:12px 0 5px }
+  input,select { width:100%; background:white }
+  .small { font-size:12px; color:var(--muted) }
+  .shots { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; margin-top:13px }
+  .shot { aspect-ratio:3/4; min-width:0; border:1px dashed #d8c7ca; border-radius:9px; overflow:hidden; position:relative; background:#faf5f4; display:grid; place-items:center; color:#b4a7a9; font-size:11px; text-align:center }
+  .shot img { width:100%; height:100%; object-fit:cover; transform:scaleX(-1) }
+  .shot button { position:absolute; bottom:4px; left:4px; right:4px; padding:5px 2px; min-height:30px; font-size:10px; background:#fffF; }
+  .preview-area { display:flex; justify-content:center; padding:10px; background:#f8f3f1; border-radius:12px; }
+  canvas { display:block; width:min(100%,260px); height:auto; box-shadow:0 5px 18px #0001; background:white }
+  .status { min-height:20px; margin-top:9px; color:var(--muted); font-size:12px }
+  .footer-note { margin-top:12px; padding:10px 11px; border-radius:10px; background:#fbf3f3; color:#765d63; font-size:12px }
+  .welcome { text-align:center; padding:23px 18px; background:#fffaf9; border:1px solid var(--line); border-radius:18px; }
+  .welcome .sparkle { font-size:28px; margin-bottom:5px; }
+  .welcome h2 { font:500 25px Georgia,serif; margin:0 0 7px; }
+  .welcome p { color:var(--muted); font-size:13px; margin:0 auto 15px; max-width:330px; }
+  .welcome button { min-width:170px; }
+  .hidden { display:none !important; }
+  .section-kicker { color:var(--rose); font-size:11px; letter-spacing:.12em; font-weight:700; margin-bottom:5px; }
+  @media(min-width:820px) {
+    main { max-width:1050px; grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr); padding:0 16px; gap:18px; margin-top:18px; }
+    .panel { padding:18px; }
+  }
+  @media(max-width:380px) {
+    .panel { padding:11px; }
+    .shots { gap:5px; }
+    .shot { font-size:10px; }
+    .controls button { flex:1 1 auto; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Little Moments</h1>
+  <p>a tiny photobooth for the people you love ♡</p>
+</header>
+<main>
+  <section class="welcome" id="welcome">
+    <div class="sparkle">♡ ✦ ♡</div>
+    <h2>Little Moments</h2>
+    <p>A tiny photobooth for the people you love. Get ready, take four photos, and keep your little memory.</p>
+    <button class="primary" id="welcomeStart">START</button>
+    <div class="small" style="margin-top:10px">No account needed · Photos stay on your device</div>
+  </section>
+  <section class="panel hidden" id="boothPanel">
+    <h2>01 / Take your photos</h2>
+    <div class="camera-wrap">
+      <video id="video" autoplay playsinline muted hidden></video>
+      <div class="placeholder" id="placeholder">Your camera preview will appear here.<br><span class="small">Allow camera access when your browser asks.</span></div>
+      <div class="countdown" id="countdown"></div>
+    </div>
+    <div class="controls">
+      <button class="primary" id="startCamera">Turn on camera</button>
+      <button id="switchCamera" disabled>Switch camera</button>
+      <button id="startSession" disabled>Start 4-cut session</button>
+      <button id="reset">Start over</button>
+    </div>
+    <div class="small" style="margin-top:8px">Four photos · 3-second countdown · Retake any shot you like.</div>
+    <div class="shots" id="shots">
+      <div class="shot">Photo 1</div><div class="shot">Photo 2</div><div class="shot">Photo 3</div><div class="shot">Photo 4</div>
+    </div>
+    <div class="status" id="status" aria-live="polite">Ready when you are.</div>
+    <div class="footer-note">Tip: prop your phone securely at eye level and check your lighting. Your photos stay in this browser and are not uploaded.</div>
+  </section>
+
+  <section class="panel hidden" id="designPanel">
+    <h2>02 / Make it yours</h2>
+    <label for="eventName">Event name</label>
+    <input id="eventName" maxlength="32" placeholder="e.g. Sunday with the cousins">
+    <label for="eventDate">Date printed on the strip</label>
+    <input id="eventDate" type="date">
+    <label for="template">Photo strip style</label>
+    <select id="template">
+      <option value="classic">Classic — white & minimal</option>
+      <option value="pink">Blush — soft pink</option>
+      <option value="black">Mono — black frame</option>
+    </select>
+    <h2 style="margin-top:22px">03 / Your photo strip</h2>
+    <div class="preview-area"><canvas id="strip" width="600" height="1800"></canvas></div>
+    <div class="controls">
+      <button class="primary" id="download" disabled>Download PNG</button>
+      <button id="share" disabled>Share image</button>
+    </div>
+    <div class="status" id="shareStatus">Take all four photos to create your strip.</div>
+    <div class="footer-note">Your finished strip is created on this device. Download it to save a copy, or use Share if your browser supports sharing image files.</div>
+  </section>
+</main>
+<script>
+const video = document.querySelector('#video');
+const placeholder = document.querySelector('#placeholder');
+const countdownEl = document.querySelector('#countdown');
+const statusEl = document.querySelector('#status');
+const shotsEl = document.querySelector('#shots');
+const canvas = document.querySelector('#strip');
+const ctx = canvas.getContext('2d');
+const photos = [null, null, null, null];
+let stream = null;
+let busy = false;
+let facingMode = 'user';
+
+const dateInput = document.querySelector('#eventDate');
+dateInput.value = new Date().toISOString().slice(0,10);
+
+function say(message) { statusEl.textContent = message; }
+function setButtons() {
+  document.querySelector('#startSession').disabled = !stream || busy;
+  document.querySelector('#switchCamera').disabled = !stream || busy;
+  document.querySelector('#download').disabled = photos.some(p => !p);
+  document.querySelector('#share').disabled = photos.some(p => !p);
+}
+async function startCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    say('Camera access needs a secure website (HTTPS) or localhost. Open the published link or use Live Server.');
+    return;
+  }
+  try {
+    if (stream) stream.getTracks().forEach(track => track.stop());
+    stream = await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:facingMode}, width:{ideal:1280}, height:{ideal:960}},
+      audio:false
+    });
+    video.srcObject = stream;
+    video.hidden = false;
+    placeholder.hidden = true;
+    await video.play();
+    say(facingMode === 'user' ? 'Front camera is ready. Smile!' : 'Rear camera is ready.');
+    setButtons();
+  } catch (err) {
+    stream = null;
+    setButtons();
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      say('Camera permission was blocked. Allow camera access in your browser settings, then try again.');
+    } else if (err.name === 'NotFoundError') {
+      say('No camera was found on this device.');
+    } else {
+      say('Could not start the camera. Check permissions and try again.');
+    }
+    console.error(err);
+  }
+}
+async function switchCamera() {
+  if (busy) return;
+  facingMode = facingMode === 'user' ? 'environment' : 'user';
+  await startCamera();
+}
+function renderShots() {
+  shotsEl.innerHTML = '';
+  photos.forEach((photo, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'shot';
+    if (photo) {
+      const img = document.createElement('img');
+      img.src = photo;
+      slot.appendChild(img);
+      const retake = document.createElement('button');
+      retake.textContent = 'Retake';
+      retake.onclick = () => captureOne(i);
+      slot.appendChild(retake);
+    } else {
+      slot.textContent = `Photo ${i+1}`;
+    }
+    shotsEl.appendChild(slot);
+  });
+  drawStrip();
+  setButtons();
+}
+function wait(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+async function countdown() {
+  for (let n=3; n>=1; n--) {
+    countdownEl.textContent = n;
+    countdownEl.style.display = 'grid';
+    await wait(850);
+  }
+  countdownEl.textContent = '♡';
+  await wait(250);
+  countdownEl.style.display = 'none';
+}
+function takeSnapshot() {
+  const w = video.videoWidth, h = video.videoHeight;
+  if (!w || !h) throw new Error('Camera is not ready yet.');
+  const shot = document.createElement('canvas');
+  shot.width = w; shot.height = h;
+  const c = shot.getContext('2d');
+  c.translate(w,0); c.scale(-1,1);
+  c.drawImage(video,0,0,w,h);
+  return shot.toDataURL('image/jpeg', .92);
+}
+async function captureOne(index) {
+  if (!stream || busy) return;
+  busy = true; setButtons();
+  say(`Get ready for photo ${index+1}…`);
+  try {
+    await countdown();
+    photos[index] = takeSnapshot();
+    renderShots();
+    say(`Photo ${index+1} captured!`);
+  } catch (e) { say(e.message); }
+  busy = false; setButtons();
+}
+async function startSession() {
+  if (!stream || busy) return;
+  busy = true; photos.fill(null); renderShots(); setButtons();
+  try {
+    for (let i=0; i<4; i++) {
+      say(`Get ready — photo ${i+1} of 4.`);
+      await countdown();
+      photos[i] = takeSnapshot();
+      renderShots();
+      await wait(450);
+    }
+    say('Your four-cut strip is ready. Retake any photo you like!');
+  } catch (e) {
+    say('The camera paused unexpectedly. Please check it and try again.');
+    console.error(e);
+  } finally {
+    busy = false;
+    setButtons();
+  }
+}
+async function drawStrip() {
+  const style = document.querySelector('#template').value;
+  const bg = style==='pink' ? '#f7e8ea' : style==='black' ? '#242225' : '#ffffff';
+  const ink = style==='black' ? '#ffffff' : '#292526';
+  const muted = style==='black' ? '#d7cbd0' : '#887b7e';
+  const accent = style==='pink' ? '#b87585' : ink;
+
+  // Load every captured photo before drawing the strip.
+  const loadedPhotos = await Promise.all(photos.map(src => new Promise(resolve => {
+    if (!src) return resolve(null);
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  })));
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle=bg; ctx.fillRect(0,0,600,1800);
+  ctx.fillStyle=ink; ctx.textAlign='center';
+  ctx.font='500 38px Georgia, serif';
+  ctx.fillText('LITTLE MOMENTS',300,67);
+  ctx.fillStyle=muted; ctx.font='20px system-ui';
+  const event = document.querySelector('#eventName').value.trim();
+  if (event) ctx.fillText(event.slice(0,34),300,105);
+
+  const x=65, y0=140, w=470, h=330, gap=24;
+  loadedPhotos.forEach((img,i)=>{
+    const y=y0+i*(h+gap);
+    ctx.fillStyle=style==='black'?'#484349':'#eee7e6';
+    ctx.fillRect(x,y,w,h);
+    if (img) {
+      const scale=Math.max(w/img.width,h/img.height);
+      const sw=w/scale, sh=h/scale;
+      ctx.drawImage(img,(img.width-sw)/2,(img.height-sh)/2,sw,sh,x,y,w,h);
+    } else {
+      ctx.fillStyle=muted; ctx.font='22px system-ui'; ctx.fillText(`PHOTO ${i+1}`,300,y+178);
+    }
+  });
+
+  ctx.fillStyle=accent; ctx.font='22px system-ui';
+  const date = document.querySelector('#eventDate').value;
+  const printedDate = date ? new Date(date+'T12:00:00').toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}) : '';
+  ctx.fillText(printedDate,300,1740);
+  ctx.font='18px Georgia, serif'; ctx.fillText('thank you for this moment ♡',300,1772);
+}
+async function downloadStrip() {
+  await drawStrip();
+  const a=document.createElement('a');
+  a.download='little-moments-photostrip.png';
+  a.href=canvas.toDataURL('image/png');
+  a.click();
+}
+async function shareStrip() {
+  await drawStrip();
+  canvas.toBlob(async blob=>{
+    if (!blob) return;
+    const file=new File([blob],'little-moments-photostrip.png',{type:'image/png'});
+    try {
+      if (navigator.canShare && navigator.canShare({files:[file]})) {
+        await navigator.share({files:[file],title:'Our photobooth strip'});
+      } else {
+        document.querySelector('#shareStatus').textContent='Image sharing is not supported in this browser. Use Download PNG instead.';
+      }
+    } catch(e) {
+      if (e.name!=='AbortError') document.querySelector('#shareStatus').textContent='Sharing was unavailable. You can still download the PNG.';
+    }
+  },'image/png');
+}
+document.querySelector('#welcomeStart').addEventListener('click',()=>{
+  document.querySelector('#welcome').classList.add('hidden');
+  document.querySelector('#boothPanel').classList.remove('hidden');
+  document.querySelector('#designPanel').classList.remove('hidden');
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+document.querySelector('#startCamera').addEventListener('click',startCamera);
+document.querySelector('#switchCamera').addEventListener('click',switchCamera);
+document.querySelector('#startSession').addEventListener('click',startSession);
+document.querySelector('#reset').addEventListener('click',()=>{photos.fill(null);renderShots();say('Photos cleared. Ready for another session!');});
+document.querySelector('#template').addEventListener('change',drawStrip);
+document.querySelector('#eventName').addEventListener('input',drawStrip);
+document.querySelector('#eventDate').addEventListener('change',drawStrip);
+document.querySelector('#download').addEventListener('click',downloadStrip);
+document.querySelector('#share').addEventListener('click',shareStrip);
+drawStrip(); renderShots();
+</script>
+</body>
+</html>
