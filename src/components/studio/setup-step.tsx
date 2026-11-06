@@ -66,7 +66,7 @@ export const SetupStep = ({ camera, session, headingRef }: SetupStepProps) => {
   );
 
   return (
-    <section className="animate-step-in min-w-0 lg:sticky lg:top-6 lg:col-span-5 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto">
+    <section className="animate-step-in min-w-0 lg:col-span-5">
       <input
         ref={inputRef}
         type="file"
@@ -79,7 +79,11 @@ export const SetupStep = ({ camera, session, headingRef }: SetupStepProps) => {
       />
       <div className="mb-5">
         <p className="type-micro text-brick">01 · Setup</p>
-        <h1 ref={headingRef} tabIndex={-1} className="type-h2 mt-2">
+        <h1
+          ref={headingRef}
+          tabIndex={-1}
+          className="type-h2 mt-2 focus:outline-none"
+        >
           Set the scene
         </h1>
         <p className="type-small mt-2 max-w-[42ch] text-ink-soft">

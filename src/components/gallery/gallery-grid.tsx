@@ -106,14 +106,16 @@ export const GalleryGrid = () => {
             Stored only in this browser.
           </p>
         </div>
-        <Button
-          variant="danger"
-          disabled={status !== "ready" || records.length === 0 || isClearing}
-          onClick={() => setIsClearOpen(true)}
-          className="self-start sm:self-auto"
-        >
-          Clear all
-        </Button>
+        {records.length > 0 ? (
+          <Button
+            variant="danger"
+            disabled={status !== "ready" || isClearing}
+            onClick={() => setIsClearOpen(true)}
+            className="self-start sm:self-auto"
+          >
+            Clear all
+          </Button>
+        ) : null}
       </header>
 
       {notice ? (

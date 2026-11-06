@@ -113,7 +113,11 @@ export const BoothStep = ({ camera, session, headingRef }: BoothStepProps) => {
       />
       <div className="mb-5">
         <p className="type-micro text-brick">02 · Booth</p>
-        <h1 ref={headingRef} tabIndex={-1} className="type-h2 mt-2">
+        <h1
+          ref={headingRef}
+          tabIndex={-1}
+          className="type-h2 mt-2 focus:outline-none"
+        >
           Strike a pose
         </h1>
         <p className="type-small mt-2 max-w-[40ch] text-ink-soft">
@@ -135,7 +139,7 @@ export const BoothStep = ({ camera, session, headingRef }: BoothStepProps) => {
         ) : null}
 
         <div className="grid gap-3">
-          {primaryButton}
+          <div className="hidden gap-3 lg:grid">{primaryButton}</div>
           {uploadButton("w-full")}
           <Button
             variant="secondary"
@@ -156,7 +160,9 @@ export const BoothStep = ({ camera, session, headingRef }: BoothStepProps) => {
             </Button>
           ) : null}
           <CameraDeviceSelect camera={camera} isDisabled={session.isRunning} />
-          <div className="border-t border-rule pt-4">{finishButton}</div>
+          <div className="hidden border-t border-rule pt-4 lg:block">
+            {finishButton}
+          </div>
         </div>
         <p className="text-xs leading-5 text-ink-soft">
           Your photos stay here until you choose to keep the strip.

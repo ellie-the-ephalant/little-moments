@@ -141,8 +141,8 @@ export const StudioShell = () => {
             <div
               className={
                 step === "setup"
-                  ? "min-w-0 lg:col-span-7"
-                  : "min-w-0 lg:col-span-8"
+                  ? "min-w-0 lg:col-span-7 lg:self-stretch"
+                  : "min-w-0 lg:col-span-8 lg:self-stretch"
               }
             >
               <CameraStage

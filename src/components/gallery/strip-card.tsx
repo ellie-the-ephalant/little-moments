@@ -42,16 +42,18 @@ export const StripCard = ({
             className="object-cover object-top transition-transform duration-300 group-hover:scale-[1.025]"
           />
         ) : null}
-        <span className="absolute top-2 left-2 rounded-[2px] border border-ink/15 bg-cream/95 px-2 py-1 text-[0.625rem] font-bold tracking-[0.12em] text-ink uppercase">
-          {layouts[record.layoutId].shortLabel}
-        </span>
       </span>
       <span className="block px-2 pt-3 pb-2">
         <span className="block truncate font-display text-lg leading-tight font-semibold text-ink">
           {record.title}
         </span>
-        <span className="mt-1 block text-xs font-semibold tracking-[0.12em] text-ink-soft uppercase">
-          {dateLabel}
+        <span className="mt-1 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+          <span className="min-w-0 truncate text-xs font-semibold tracking-[0.12em] text-ink-soft uppercase">
+            {dateLabel}
+          </span>
+          <span className="shrink-0 rounded-[2px] border border-ink/15 bg-cream px-2 py-1 text-[0.625rem] font-bold tracking-[0.12em] text-ink uppercase">
+            {layouts[record.layoutId].shortLabel}
+          </span>
         </span>
       </span>
     </span>
