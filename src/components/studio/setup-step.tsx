@@ -59,7 +59,7 @@ export const SetupStep = ({ camera, session, headingRef }: SetupStepProps) => {
   const switchCamera = () => void camera.switchCamera();
   const uploadButton = (className?: string) => (
     <PhotoUploadButton
-      isDisabled={isProcessing}
+      isDisabled={isProcessing || session.isRunning}
       onClick={openPicker}
       className={className}
     />

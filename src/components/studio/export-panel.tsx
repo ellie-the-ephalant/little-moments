@@ -59,10 +59,17 @@ export const ExportPanel = ({
   const savingRef = useRef(false);
   const isMounted = useMounted();
   const geometry = getStripGeometry(settings.layoutId);
-  const standardDimensions = getExportDimensions(geometry, 1);
-  const requestedHighDimensions = getExportDimensions(geometry, 2);
-  const highResolutionAvailable = isHighResolutionAvailable(geometry);
-  const requestedResolution = highResolutionAvailable ? resolution : 1;
+  const standardDimensions = isMounted
+    ? getExportDimensions(geometry, 1)
+    : { scale: 1, width: geometry.width, height: geometry.height };
+  const requestedHighDimensions = isMounted
+    ? getExportDimensions(geometry, 2)
+    : { scale: 2, width: geometry.width * 2, height: geometry.height * 2 };
+  const highResolutionAvailable = isMounted
+    ? isHighResolutionAvailable(geometry)
+    : true;
+  const requestedResolution =
+    isMounted && highResolutionAvailable ? resolution : 1;
   const exportState = usePreparedExport({
     photos,
     settings,
@@ -70,6 +77,7 @@ export const ExportPanel = ({
   });
   const isSaved = savedStripRevision === stripRevision;
   const highFellBack =
+    isMounted &&
     highResolutionAvailable &&
     resolution === 2 &&
     exportState.status === "ready" &&

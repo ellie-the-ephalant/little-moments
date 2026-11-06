@@ -82,7 +82,7 @@ export const BoothStep = ({ camera, session, headingRef }: BoothStepProps) => {
   );
   const uploadButton = (className?: string) => (
     <PhotoUploadButton
-      isDisabled={isProcessing}
+      isDisabled={isProcessing || session.isRunning}
       onClick={openPicker}
       className={className}
     />

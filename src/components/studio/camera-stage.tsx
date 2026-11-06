@@ -35,7 +35,12 @@ export const CameraStage = ({
   const isMirrored = mirror && facing === "user";
 
   return (
-    <figure className="mx-auto w-full max-w-[560px] lg:sticky lg:top-6">
+    <figure
+      className={cn(
+        "mx-auto w-full max-w-[560px]",
+        step === "setup" && "lg:sticky lg:top-6",
+      )}
+    >
       <div className="relative mx-auto aspect-[4/5] w-full overflow-hidden rounded-panel border border-rule bg-paper-deep shadow-panel max-lg:w-[min(100%,calc(52svh*0.8))]">
         <video
           ref={videoRef}

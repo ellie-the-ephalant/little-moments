@@ -49,8 +49,13 @@ export const usePhotoUploads = (camera: Pick<UseCameraResult, "stop">) => {
           "error",
         );
       }
-      if (result.ignored)
-        toast(`Added the first ${result.photos.length} photos.`);
+      if (result.ignored) {
+        toast(
+          result.photos.length
+            ? `Added the first ${result.photos.length} photos.`
+            : "Every frame is already filled.",
+        );
+      }
 
       const destination = getUploadDestination(
         store.step,
